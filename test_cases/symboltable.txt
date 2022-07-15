@@ -1,0 +1,17 @@
+const a := 7, b := 4, c := 3;
+var z, y, x;
+procedure A;
+	const d := 2, a := 5;
+	var b, w, r;
+	procedure B;
+		const x := 10;
+		var b;
+		call B;
+	;
+procedure B;
+	const d := 3, x := 8;
+	var y, w;
+	procedure C;
+		call B;
+	call A;
+call B.

@@ -1,0 +1,12 @@
+const a := 3;
+var x;
+procedure B;
+	var a;
+	begin
+		a := 10;
+		x := a - x;
+	end;
+begin
+	x := -(((a*8)+1)/5);
+	call B;
+end.
