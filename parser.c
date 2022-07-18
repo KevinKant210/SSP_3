@@ -278,13 +278,43 @@ void assign(){
 		
 }
 void call(){
+	lexeme currToken = getToken();
 
+	// Check to make sure the identifier matches a procedure in the symbol table
+	int symIdx = getSymIdx(currToken);
+
+	if(symIdx == -1|| currToken.type != procsym){
+		printassemblycode(7);
+		hasError = true;
+		return;
+	}
+
+	// not sure if right.
+	emit(5,level-table[symIdx].level,table[symIdx].addr);
 }
 void begin(){
 
+	statement();
+	do{
+		// Need to fix
+		lexeme currToken = getToken();
+		if(currToken.token != semicolonsym){
+			printassemblycode();
+			hasError = true;
+			return;
+		}
+
+		if{
+			statement();
+		}
+	}while(currToken.type == semicolonsym)
 }
 void ifStatement(){
+	condition
+	int jpcIdx == cIndex;
 
+	// put a jump. addr unknown depending on the if statement outcome
+	emit(7, 0,0);
 }
 void whileStatement(){
 
@@ -296,6 +326,45 @@ void writeStatement(){
 
 }
 
+void condition(){
+
+	expression();
+
+	lexeme currToken = getToken();
+
+	// =
+	if(currToken.type == eqlsym){
+		expression();
+		emit(2,0,7);
+	}
+	// !=
+	else if(currToken.type == neqsym){
+		expression();
+		emit(2,0,8);
+	}
+	// <
+	else if(currToken.type == lessym){
+		expression();
+		emit(2,0,9); 
+	}
+	// <=
+	else if(currToken.type == leqsym){
+		expression();
+		emit(2,0,10);
+
+	}
+	// >
+	else if(currToken.type == gtrsym){
+		expression();
+		emit(2,0,11);
+
+	}
+	// >=
+	else if(currToken.type == geqsym){
+		expression();
+		emit(2,0,12);
+	}
+}
 
 
 //used in assignment statements and write statements
@@ -305,7 +374,7 @@ void expression(){
 	
 	// if a var is getting assigned a negative expression
 	if(currToken.type == minussym){
-		term();
+		term(currToken);
 		//NEG
 		emit(2,0,1);
 	}
@@ -317,7 +386,7 @@ void expression(){
 	// not sure what this does
 	while (currToken.type == plussym||currToken.type == minussym){
 		if(currToken.type == plussym){
-			term();
+			term(currToken);
 			//ADD
 			emit(2,0,2);
 		}
@@ -330,9 +399,9 @@ void expression(){
 
 }
 
-void term(){
-	// Where I stopped
-	factor();
+void term(lexeme currToken){
+	
+	factor(currToken);
 
 	lexeme currToken = getToken();
 
@@ -349,14 +418,13 @@ void term(){
 			factor();
 			emit(2,0,6);
 		}
-		else()
+		
 	}
 
 }
 
-void factor(){
+void factor(lexeme currToken){
 
-	lexeme currToken = getToken();
 	int kind;
 
 	
@@ -364,12 +432,17 @@ void factor(){
 
 		currToken = getToken();
 		int symIdx = getSymIdx(currToken);
-		if(symIdx == -1 || symIdx == 3){
+		if(symIdx == -1){
+			printassemblycode(19);
+			hasError = true;
+			return;
+		}
+		else if(symIdx == 3){
 			printassemblycode(11);
 			hasError = true;
 			return;
 		}
-
+		
 		if(currToken.type == constsym){
 			emit(1,0,table[symIdx].value);
 		}
@@ -384,6 +457,8 @@ void factor(){
 	}
 	else if(token == lparentsym){
 		expression();
+
+
 	}
 
 }
