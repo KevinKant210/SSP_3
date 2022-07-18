@@ -80,7 +80,7 @@ void block(){
 	//not finished!! :)
 }
 
-
+//constant declarations
 void constDec(){
 
 	lexeme currToken = getToken();
@@ -140,7 +140,7 @@ void constDec(){
 	
 
 }
-
+//variable declarations
 int varDec(){
 	int numVars = 0;
 	//vars will be offset by 3 in symbol table
@@ -183,7 +183,7 @@ int varDec(){
 		}
 	}
 }
-
+//procedure declarations
 void procDec(){
 
 	lexeme currToken = getToken();
@@ -208,11 +208,202 @@ void procDec(){
 	//finish programming block!
 	block();
 
+	currToken = getToken();
+
+	if(currToken.type != semicolonsym){
+		printassemblycode(4);
+		hasError = true;
+		return;
+	}
+
+	// Putting a return on the code stack
+	emit(2,0,0);
+
 	return;
 }
 
 int statement(){
 
+	lexeme currToken = getToken();
+
+	// assignment statements (“ident := expression”)
+	if(currToken.type == identsym){
+		assign();
+	}
+	else if(currToken.type == callsym){
+		call();
+	}
+	else if(currToken.type == beginsym){
+		begin();
+	}
+	else if(currToken.type == ifsym){
+		ifStatement();
+	}
+	else if(currToken.type == whilesym){
+		whileStatement();
+	}
+	else if(currToken.type == writesym){
+		writeStatement();
+	}
+	else if(currToken.type == readsym){
+		readStatement();
+	}
+
+}
+
+//Statement functions
+void assign(){
+
+	lexeme currToken = getToken();
+
+		int symIdx = getSymIdx(currToken);
+
+		if(symIdx == -1|| currToken.type != varsym){
+			printassemblycode(6);
+			hasError = true;
+			return;
+		}
+
+		currToken = getToken();
+
+		if(currToken.type != becomessym){
+			printassemblycode(5);
+			hasError(5);
+			return;
+		}
+
+		expression();
+
+		emit(4,level-table[symIdx].level,table[symIdx].addr);
+		
+}
+void call(){
+
+}
+void begin(){
+
+}
+void ifStatement(){
+
+}
+void whileStatement(){
+
+}
+void readStatement(){
+
+}
+void writeStatement(){
+
+}
+
+
+
+//used in assignment statements and write statements
+void expression(){
+	
+	lexeme currToken = getToken();
+	
+	// if a var is getting assigned a negative expression
+	if(currToken.type == minussym){
+		term();
+		//NEG
+		emit(2,0,1);
+	}
+	// if a var is getting assigned anything else
+	else{
+		term();
+	}
+
+	// not sure what this does
+	while (currToken.type == plussym||currToken.type == minussym){
+		if(currToken.type == plussym){
+			term();
+			//ADD
+			emit(2,0,2);
+		}
+		else{
+			term();
+			//SUB
+			emit(2,0,3);
+		}
+	}
+
+}
+
+void term(){
+	// Where I stopped
+	factor();
+
+	lexeme currToken = getToken();
+
+	while(currToken.type == multsym||currToken.type == slashsym || currToken.type == modsym ){
+		if(currToken.type == multsym){
+			factor();
+			emit(2,0,4);
+		}
+		else if(currToken.type == slashsym){
+			factor();
+			emit(2,0,5);
+		}
+		else if(currToken.type == modsym){
+			factor();
+			emit(2,0,6);
+		}
+		else()
+	}
+
+}
+
+void factor(){
+
+	lexeme currToken = getToken();
+	int kind;
+
+	
+	if(currToken.type == identsym){
+
+		currToken = getToken();
+		int symIdx = getSymIdx(currToken);
+		if(symIdx == -1 || symIdx == 3){
+			printassemblycode(11);
+			hasError = true;
+			return;
+		}
+
+		if(currToken.type == constsym){
+			emit(1,0,table[symIdx].value);
+		}
+		else{
+			emit(3,level-table[symIdx].level,table[symIdx].addr);
+		}
+
+	}
+	// if var is being assigned a number
+	else if(token == numbersym){
+		emit(1,0,currToken.value);
+	}
+	else if(token == lparentsym){
+		expression();
+	}
+
+}
+
+int getSymIdx(lexeme token){
+
+	
+		if(token.type == constsym){
+			kind = 1;
+		}
+		else if(token.type == varsym ){
+			kind 2;
+		}
+		else{
+			kind 3;
+		}
+		
+		int symIdx = findsymbol(table,kind);
+
+		return symIdx;
 }
 
 
@@ -244,7 +435,7 @@ instruction *parser_code_generator(lexeme *list)
 		return;
 	}
 	//put halt on the code stack
-	emit(0,0,0);
+	emit(9,0,3);
 	
 
 	
