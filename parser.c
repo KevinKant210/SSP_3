@@ -11,6 +11,9 @@
 #include <string.h>
 #include "compiler.h"
 
+#define false  1
+#define true  0
+
 lexeme *tokens;
 int lIndex = 0;
 instruction *code;
@@ -18,7 +21,11 @@ int cIndex = 0;
 symbol *table;
 int tIndex = 0;
 
+//global level variable
 int level;
+//value to check if an error occured during parsing
+// 0 = true, error occured 1 = false no eror
+int hasError = false;
 
 void emit(int opname, int level, int mvalue);
 void addToSymbolTable(int k, char n[], int v, int l, int a, int m);
@@ -30,16 +37,216 @@ void printparseerror(int err_code);
 void printsymboltable();
 void printassemblycode();
 
+//helper functions
+lexeme getToken(){
+	lexeme curr = tokens[lIndex];
+	lIndex++;
+	return curr;
+}
+
+void pushToken(){
+	//when looking at token did not get what we expected so we put it back on top
+	lIndex--;
+}
+
+//our fun functions XD lmao rawr
+void block(){
+	level++;
+	int currProc = tIndex-1;
+	int numVars,hasError;
+
+	lexeme currToken = getToken();
+
+	//check to see if we are running into a const symbol
+	if(currToken.type == constsym){
+		constDec();
+	}
+
+	if(hasError == true ){
+		return;
+	}
+
+	if(currToken.type == varsym){
+		
+		numVars = varDec();
+	}
+
+	if(currToken.type == procsym){
+		procDec();
+	}
+	
+	//at the end run statements
+	statement();
+	//not finished!! :)
+}
+
+
+void constDec(){
+
+	lexeme currToken = getToken();
+
+	int halt = false;
+
+	while(halt != true){
+		//identifier -> become sym -> number ->comma or semicolon
+		if(currToken.type != identsym){
+			//expected ident sym got something else
+			printparseerror(2);
+			hasError = true;
+			return;
+		}
+
+		lexeme var = currToken;
+
+		currToken = getToken();
+
+		if(currToken.type != becomessym){
+			printparseerror(2);
+			hasError = true;
+			return;
+		}
+
+
+		currToken = getToken();
+
+		if(currToken.type != numbersym){
+			printparseerror(2);
+			hasError = true;
+			return;
+		}
+
+		addToSymbolTable(1,var.name,currToken.value,-1,-1,0);
+
+
+		currToken = getToken();
+
+		if(currToken.type == semicolonsym){
+			halt = true;
+		}else if(currToken.type == commasym){
+			currToken = getToken();
+		}else if(currToken.type == identsym){
+
+			printparseerror(13);
+			hasError = true;
+			return;
+		}else{
+			printparseerror(14);
+			hasError = true;
+			return;
+		}
+		
+	}
+	
+	
+
+}
+
+int varDec(){
+	int numVars = 0;
+	//vars will be offset by 3 in symbol table
+	
+	lexeme currToken = getToken();
+
+	int halt = false;
+
+	while(halt != true){
+		// [ "var "ident {"," ident} “;"].
+		if(currToken.type != identsym){
+			//expected ident sym got something else
+			printparseerror(3);
+			hasError = true;
+			return;
+		}
+
+		addToSymbolTable(2,currToken.name,0,level,numVars + 3,0);
+		numVars++;
+
+		currToken = getToken();
+
+		if(currToken.type == commasym){
+
+			currToken = getToken();
+
+		}else if(currToken.type == semicolonsym){
+
+			halt = true;
+
+		}else if(currToken.type == identsym){
+
+			printparseerror(13);
+			hasError = true;
+			return;
+		}else{
+			printparseerror(14);
+			hasError = true;
+			return;
+		}
+	}
+}
+
+void procDec(){
+
+	lexeme currToken = getToken();
+
+	if(currToken.type != identsym){
+		printparseerror(4);
+		hasError = true;
+		return;
+	}
+
+	lexeme proc = currToken;
+	currToken = getToken();
+
+	if(currToken.type != semicolonsym){
+		printparseerror(4);
+		hasError = true;
+		return;
+	}
+	//figure out what address we need to put for our procedures
+	// just fill in
+	addToSymbolTable(3,proc.name,0,0,0,0);
+	//finish programming block!
+	block();
+
+	return;
+}
+
+int statement(){
+
+}
+
+
+
+
 instruction *parser_code_generator(lexeme *list)
 {
-	int i;
+	int i ;
 	tokens = list;
 	code = malloc(sizeof(instruction) * MAX_ARRAY_SIZE);
 	table = malloc(sizeof(symbol) * MAX_ARRAY_SIZE);
+
+
 	
 	// Your code here. 
 	// Make sure to remember to free table before returning always
 	// and to free code and return NULL if there was an error
+	
+	//this is program from the psuedo code
+
+	//put a jump with m = 0 on the code stack
+	emit(7,0,0);
+	addToSymbolTable(3, "main",0,0,0,0);
+	level = -1;
+
+	block();
+
+	if(hasError == true){
+		return;
+	}
+	//put halt on the code stack
+	emit(0,0,0);
+	
+
 	
 	code[cIndex].op = -1;
 	return code;
