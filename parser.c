@@ -373,6 +373,7 @@ void ifStatement(){
 
 	lexeme then = getToken();
 
+	// If there is no then after the if ifsym
 	if(then.type != thensym){
 		printparseerror(8);
 		hasError = true;
@@ -401,6 +402,14 @@ void ifStatement(){
 void whileStatement(){
 	int loopIdx = cIndex;
 	condition();
+
+	lexeme dostatement = getToken();
+	if(dostatement.type != dosym){
+		printparseerror(9);
+		hasError = true;
+		return;
+	}
+	
 	int jpcIdx = cIndex;
 	emit(7,0,0);
 	statement();
@@ -469,6 +478,7 @@ void condition(){
 
 //used in assignment statements and write statements
 void expression(){
+	//["-"] term { ("+"|"-") term}.
 	
 	lexeme currToken = getToken();
 	
@@ -507,15 +517,15 @@ void term(lexeme currToken){
 
 	while(operation.type == multsym||operation.type == slashsym || operation.type == modsym ){
 		if(operation.type == multsym){
-			factor();
+			factor(currToken);
 			emit(2,0,4);
 		}
 		else if(operation.type == slashsym){
-			factor();
+			factor(currToken);
 			emit(2,0,5);
 		}
 		else if(operation.type == modsym){
-			factor();
+			factor(currToken);
 			emit(2,0,6);
 		}
 		
