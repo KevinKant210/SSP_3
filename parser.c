@@ -317,7 +317,7 @@ void assign(lexeme identifier){
 
 		expression();
 
-		emit(4,level-table[symIdx].level,table[symIdx].addr);
+		emit(4,level-table[identIndex].level,table[identIndex].addr);
 		
 }
 void call(){
