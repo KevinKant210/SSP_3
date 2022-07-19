@@ -267,7 +267,7 @@ int statement(){
 
 	// assignment statements (“ident := expression”)
 	if(currToken.type == identsym){
-		assign();
+		assign(currToken);
 	}
 	else if(currToken.type == callsym){
 		call();
@@ -285,29 +285,37 @@ int statement(){
 		writeStatement(currToken);
 	}
 	else if(currToken.type == readsym){
+<<<<<<< HEAD
 		readStatement(currToken);
+=======
+		readStatement();
+	}else{
+		//must have been an error?
+>>>>>>> 28715d55ca61ffeac52f40620b288ee4d3e8a3a7
 	}
 
 }
 
 //Statement functions
-void assign(){
+void assign(lexeme identifier){
 
-	lexeme currToken = getToken();
+	
 
-		int symIdx = getSymIdx(currToken);
+	int identIndex = findsymbol(identifier.name,2);
 
-		if(symIdx == -1|| currToken.type != varsym){
+		
+
+		if(identIndex == -1){
 			printassemblycode(6);
 			hasError = true;
 			return;
 		}
 
-		currToken = getToken();
+		lexeme currToken = getToken();
 
 		if(currToken.type != becomessym){
 			printassemblycode(5);
-			hasError(5);
+			hasError = true;
 			return;
 		}
 
