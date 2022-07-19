@@ -283,7 +283,12 @@ void call(){
 	// Check to make sure the identifier matches a procedure in the symbol table
 	int symIdx = getSymIdx(currToken);
 
-	if(symIdx == -1|| currToken.type != procsym){
+	if(symIdx == -1){
+		printassemblycode(19);
+		hasError = true;
+		return;
+	}
+	else if(currToken.type != procsym){
 		printassemblycode(7);
 		hasError = true;
 		return;
@@ -310,20 +315,54 @@ void begin(){
 	}while(currToken.type == semicolonsym)
 }
 void ifStatement(){
-	condition
+
+	condition();
 	int jpcIdx == cIndex;
 
 	// put a jump. addr unknown depending on the if statement outcome
 	emit(7, 0,0);
+
+	statement();
+
+	// does jmpidx need to be global?
+	int jmpIdx = 0;
+	lexeme currToken = getToken();
+	if(currToken.type == elsesym){
+		jmpIdx = cIndex
+		emit(7,0,0);
+		code[jpcIdx].m = cIndex*3;
+		statement();
+		code[jmpIdx].m = cIndex*3;
+	}
+	else{
+		code[jpcIdx].m = cIndex*3;
+	}
 }
 void whileStatement(){
-
+	int loopIdx = cIndex;
+	condition();
+	int jpcIdx = cIndex;
+	emit(7,0,0);
+	statement();
+	emit(7,0,loopIdx*3);
+	code[jpcIdx].m = cIndex;
 }
 void readStatement(){
 
+	lexeme currToken = getToken();
+	int symIdx = getSymIdx(currToken);
+	if(symIdx == -1){
+		printassemblycode(19);
+		hasError = true;
+		return;
+	}
+	emit(9, 0, 2); 
+	emit(4, level - table[symIdx].level,table[symIdx].addr);
+
 }
 void writeStatement(){
-
+	expression();
+	emit(9,0,1);
 }
 
 void condition(){
@@ -463,6 +502,7 @@ void factor(lexeme currToken){
 
 }
 
+// finds the token and its kind, returns the index or -1 if not found in the table
 int getSymIdx(lexeme token){
 
 	
