@@ -369,7 +369,7 @@ void begin(){
 void ifStatement(){
 
 	condition();
-	int jpcIdx == cIndex;
+	int jpcIdx = cIndex;
 
 	lexeme then = getToken();
 
@@ -380,7 +380,7 @@ void ifStatement(){
 		return;
 	}
 	// put a jump. addr unknown depending on the if statement outcome
-	emit(7, 0,0);
+	emit(7,0,0);
 
 	statement();
 	
@@ -388,7 +388,7 @@ void ifStatement(){
 	int jmpIdx = 0;
 	lexeme currToken = getToken();
 	if(currToken.type == elsesym){
-		jmpIdx = cIndex
+		jmpIdx = cIndex;
 		emit(7,0,0);
 		code[jpcIdx].m = cIndex*3;
 		statement();
@@ -474,6 +474,11 @@ void condition(){
 		expression();
 		emit(2,0,12);
 	}
+	else{
+		printparseerror(10);
+		hasError = true;
+		return;
+	}
 }
 
 //used in assignment statements and write statements
@@ -556,7 +561,7 @@ void factor(lexeme factToken){
 	}
 	// if var is being assigned a number
 	else if(factToken.type == numbersym){
-		emit(1,0,currToken.value);
+		emit(1,0,factToken.value);
 	}
 	else if(factToken.type == lparentsym){
 		expression();
