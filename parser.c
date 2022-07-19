@@ -285,13 +285,7 @@ int statement(){
 		writeStatement(currToken);
 	}
 	else if(currToken.type == readsym){
-<<<<<<< HEAD
 		readStatement(currToken);
-=======
-		readStatement();
-	}else{
-		//must have been an error?
->>>>>>> 28715d55ca61ffeac52f40620b288ee4d3e8a3a7
 	}
 
 }
