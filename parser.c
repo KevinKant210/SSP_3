@@ -52,7 +52,7 @@ void pushToken(){
 //our fun functions XD lmao rawr
 void block(){
 	level++;
-	int currProc = tIndex-1;
+	int currProcIndex = tIndex-1;
 	int numVars;
 
 	lexeme currToken = getToken();
@@ -92,13 +92,18 @@ void block(){
 		emit(6,0,numVars+3);
 	}
 	
-	//at the end run statements
+	//at the end run statements and store address
+	table[currProcIndex].addr = cIndex;
+	emit(6,0,numVars+3);
+
 	statement();
 	
+
 	mark();
 
 	level = level-1;
 
+	return;
 }
 
 //constant declarations
@@ -244,7 +249,7 @@ void procDec(){
 	//figure out what address we need to put for our procedures
 	// just fill in
 	addToSymbolTable(3,proc.name,0,0,0,0);
-	//finish programming block!
+	
 	block();
 
 	currToken = getToken();
@@ -351,19 +356,65 @@ void call(){
 void begin(){
 
 	statement();
-	do{
-		// Need to fix
-		lexeme currToken = getToken();
-		if(currToken.token != semicolonsym){
-			printparseerror();
-			hasError = true;
-			return;
-		}
+	lexeme currToken = getToken();
 
-		if{
+	while(currToken.type == semicolonsym){
+		
+		currToken = getToken();
+		if(currToken.type == endsym){
+			pushToken();
+		}else{
+			pushToken();
 			statement();
 		}
-	}while(currToken.type == semicolonsym)
+	}
+
+	currToken = getToken();
+
+	if(currToken != endsym){
+
+		switch (currToken.type)
+		{
+		case identsym:
+			printparseerror(15);
+			break;
+
+		case readsym:
+			printparseerror(15);
+			break;
+
+		case writesym:
+			printparseerror(15);
+			break;
+		
+		case beginsym:
+			printparseerror(15);
+			break;
+		
+		case callsym:
+			printparseerror(15);
+			break;
+
+		case ifsym:
+			printparseerror(15);
+			break;
+
+		case whilesym:
+			printparseerror(15);
+			break;
+		
+		default:
+			printparseerror(16);
+		}
+
+		hasError = true;
+
+		return;
+
+
+	}
+
+
 }
 
 void ifStatement(){
