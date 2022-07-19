@@ -290,6 +290,7 @@ int statement(){
 
 }
 
+
 //Statement functions
 void assign(lexeme identifier){
 
@@ -300,7 +301,12 @@ void assign(lexeme identifier){
 		
 
 		if(identIndex == -1){
-			printassemblycode(6);
+			if(findsymbol(identifier.name,3) != -1 || findsymbol(identifier.name,1) != 1){
+				printparseerror(6);
+				hasError = true;
+				return;
+			}
+			printparseerror(19);
 			hasError = true;
 			return;
 		}
@@ -308,7 +314,7 @@ void assign(lexeme identifier){
 		lexeme currToken = getToken();
 
 		if(currToken.type != becomessym){
-			printassemblycode(5);
+			printparseerror(5);
 			hasError = true;
 			return;
 		}
@@ -318,26 +324,34 @@ void assign(lexeme identifier){
 		emit(4,level-table[identIndex].level,table[identIndex].addr);
 		
 }
+
+
 void call(){
 	lexeme currToken = getToken();
 
 	// Check to make sure the identifier matches a procedure in the symbol table
-	int symIdx = getSymIdx(currToken);
+	int symIdx = findsymbol(currToken.name,3);
 
 	if(symIdx == -1){
-		printassemblycode(19);
+		if(findsymbol(currToken.name,1) != -1 || findsymbol(currToken.name,2) != -1 || currToken.type != identsym){
+			printparseerror(7);
+			hasError = true;
+			return;
+		}
+
+		printparseerror(19);
 		hasError = true;
 		return;
-	}
-	else if(currToken.type != procsym){
-		printassemblycode(7);
-		hasError = true;
-		return;
+		
 	}
 
+	
+
 	// not sure if right.
-	emit(5,level-table[symIdx].level,table[symIdx].addr);
+	emit(5,level-table[symIdx].level,symIdx);
 }
+
+
 void begin(){
 
 	statement();
@@ -355,6 +369,7 @@ void begin(){
 		}
 	}while(currToken.type == semicolonsym)
 }
+
 void ifStatement(){
 
 	condition();
@@ -379,6 +394,7 @@ void ifStatement(){
 		code[jpcIdx].m = cIndex*3;
 	}
 }
+
 void whileStatement(){
 	int loopIdx = cIndex;
 	condition();
@@ -388,6 +404,7 @@ void whileStatement(){
 	emit(7,0,loopIdx*3);
 	code[jpcIdx].m = cIndex;
 }
+
 void readStatement(lexeme identifier){
 
 	
@@ -401,6 +418,7 @@ void readStatement(lexeme identifier){
 	emit(4, level - table[symIdx].level,table[symIdx].addr);
 
 }
+
 void writeStatement(){
 	expression();
 	emit(9,0,1);
