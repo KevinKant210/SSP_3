@@ -341,7 +341,7 @@ void begin(){
 		// Need to fix
 		lexeme currToken = getToken();
 		if(currToken.token != semicolonsym){
-			printassemblycode();
+			printparseerror();
 			hasError = true;
 			return;
 		}
@@ -356,11 +356,18 @@ void ifStatement(){
 	condition();
 	int jpcIdx == cIndex;
 
+	lexeme then = getToken();
+
+	if(then.type != thensym){
+		printparseerror(8);
+		hasError = true;
+		return;
+	}
 	// put a jump. addr unknown depending on the if statement outcome
 	emit(7, 0,0);
 
 	statement();
-
+	
 	// does jmpidx need to be global?
 	int jmpIdx = 0;
 	lexeme currToken = getToken();
@@ -442,7 +449,6 @@ void condition(){
 	}
 }
 
-
 //used in assignment statements and write statements
 void expression(){
 	
@@ -456,7 +462,7 @@ void expression(){
 	}
 	// if a var is getting assigned anything else
 	else{
-		term();
+		term(currToken);
 	}
 
 	// not sure what this does
@@ -467,7 +473,7 @@ void expression(){
 			emit(2,0,2);
 		}
 		else{
-			term();
+			term(currToken);
 			//SUB
 			emit(2,0,3);
 		}
@@ -536,28 +542,6 @@ void factor(lexeme factToken){
 	}
 
 }
-
-// finds the token and its kind, returns the index or -1 if not found in the table
-int getSymIdx(lexeme token){
-
-	
-		if(token.type == constsym){
-			kind = 1;
-		}
-		else if(token.type == varsym ){
-			kind 2;
-		}
-		else{
-			kind 3;
-		}
-		
-		int symIdx = findsymbol(table,kind);
-
-		return symIdx;
-}
-
-
-
 
 instruction *parser_code_generator(lexeme *list)
 {
