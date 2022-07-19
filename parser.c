@@ -282,10 +282,10 @@ int statement(){
 		whileStatement();
 	}
 	else if(currToken.type == writesym){
-		writeStatement();
+		writeStatement(currToken);
 	}
 	else if(currToken.type == readsym){
-		readStatement();
+		readStatement(currToken);
 	}
 
 }
@@ -386,10 +386,10 @@ void whileStatement(){
 	emit(7,0,loopIdx*3);
 	code[jpcIdx].m = cIndex;
 }
-void readStatement(){
+void readStatement(lexeme identifier){
 
-	lexeme currToken = getToken();
-	int symIdx = getSymIdx(currToken);
+	
+	int symIdx = findsymbol(identifier.name,2);
 	if(symIdx == -1){
 		printassemblycode(19);
 		hasError = true;
