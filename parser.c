@@ -420,17 +420,18 @@ void begin(){
 void ifStatement(){
 
 	condition();
-	int jpcIdx == cIndex;
+	int jpcIdx = cIndex;
 
 	lexeme then = getToken();
 
+	// If there is no then after the if ifsym
 	if(then.type != thensym){
 		printparseerror(8);
 		hasError = true;
 		return;
 	}
 	// put a jump. addr unknown depending on the if statement outcome
-	emit(7, 0,0);
+	emit(7,0,0);
 
 	statement();
 	
@@ -438,7 +439,7 @@ void ifStatement(){
 	int jmpIdx = 0;
 	lexeme currToken = getToken();
 	if(currToken.type == elsesym){
-		jmpIdx = cIndex
+		jmpIdx = cIndex;
 		emit(7,0,0);
 		code[jpcIdx].m = cIndex*3;
 		statement();
@@ -452,6 +453,14 @@ void ifStatement(){
 void whileStatement(){
 	int loopIdx = cIndex;
 	condition();
+
+	lexeme dostatement = getToken();
+	if(dostatement.type != dosym){
+		printparseerror(9);
+		hasError = true;
+		return;
+	}
+	
 	int jpcIdx = cIndex;
 	emit(7,0,0);
 	statement();
@@ -516,10 +525,16 @@ void condition(){
 		expression();
 		emit(2,0,12);
 	}
+	else{
+		printparseerror(10);
+		hasError = true;
+		return;
+	}
 }
 
 //used in assignment statements and write statements
 void expression(){
+	//["-"] term { ("+"|"-") term}.
 	
 	lexeme currToken = getToken();
 	
@@ -558,15 +573,15 @@ void term(lexeme currToken){
 
 	while(operation.type == multsym||operation.type == slashsym || operation.type == modsym ){
 		if(operation.type == multsym){
-			factor();
+			factor(currToken);
 			emit(2,0,4);
 		}
 		else if(operation.type == slashsym){
-			factor();
+			factor(currToken);
 			emit(2,0,5);
 		}
 		else if(operation.type == modsym){
-			factor();
+			factor(currToken);
 			emit(2,0,6);
 		}
 		
@@ -576,9 +591,7 @@ void term(lexeme currToken){
 
 void factor(lexeme factToken){
 
-	int kind;
 
-	
 	if(factToken.type == identsym){
 
 		factToken = getToken();
@@ -589,7 +602,7 @@ void factor(lexeme factToken){
 			return;
 		}
 		
-		if(currToken.type == constsym){
+		if(factToken.type == constsym){
 			emit(1,0,table[symIdx].value);
 		}
 		else{
@@ -598,11 +611,18 @@ void factor(lexeme factToken){
 
 	}
 	// if var is being assigned a number
-	else if(token == numbersym){
-		emit(1,0,currToken.value);
+	else if(factToken.type == numbersym){
+		emit(1,0,factToken.value);
 	}
-	else if(token == lparentsym){
+	else if(factToken.type == lparentsym){
 		expression();
+		
+		factToken = getToken();
+		if(factToken.type != rparentsym){
+			printparseerror(12);
+			hasError = true;
+			return;
+		}
 	}
 	else{
 		printparseerror(11);
