@@ -250,7 +250,7 @@ void procDec(){
 	currToken = getToken();
 
 	if(currToken.type != semicolonsym){
-		printassemblycode(14);
+		printparseerror(14);
 		hasError = true;
 		return;
 	}
@@ -413,7 +413,7 @@ void readStatement(lexeme identifier){
 	
 	int symIdx = findsymbol(identifier.name,2);
 	if(symIdx == -1){
-		printassemblycode(19);
+		printparseerror(19);
 		hasError = true;
 		return;
 	}
@@ -533,7 +533,7 @@ void factor(lexeme factToken){
 		factToken = getToken();
 		int symIdx = findsymbol(factToken.name,2);
 		if(symIdx == -1){
-			printassemblycode(19);
+			printparseerror(19);
 			hasError = true;
 			return;
 		}
@@ -554,7 +554,7 @@ void factor(lexeme factToken){
 		expression();
 	}
 	else{
-		printassemblycode(11);
+		printparseerror(11);
 		hasError = true;
 		return;
 	}
