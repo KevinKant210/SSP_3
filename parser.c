@@ -53,7 +53,7 @@ void pushToken(){
 void block(){
 	level++;
 	int currProc = tIndex-1;
-	int numVars,hasError;
+	int numVars;
 
 	lexeme currToken = getToken();
 
@@ -64,20 +64,41 @@ void block(){
 
 	if(hasError == true ){
 		return;
+	}else{
+		currToken = getToken();
 	}
+
+
 
 	if(currToken.type == varsym){
 		
 		numVars = varDec();
 	}
 
+	if(hasError == true ){
+		return;
+	}else{
+		currToken = getToken();
+	}
+
 	if(currToken.type == procsym){
 		procDec();
+	}
+
+	if(hasError == true ){
+		return;
+	}else{
+		table[currProc].addr = cIndex;
+		emit(6,0,numVars+3);
 	}
 	
 	//at the end run statements
 	statement();
-	//not finished!! :)
+	
+	mark();
+
+	level = level-1;
+
 }
 
 //constant declarations
@@ -92,6 +113,12 @@ void constDec(){
 		if(currToken.type != identsym){
 			//expected ident sym got something else
 			printparseerror(2);
+			hasError = true;
+			return;
+		}
+
+		if(multipledeclarationcheck(currToken.name) != -1){
+			printparseerror(18);
 			hasError = true;
 			return;
 		}
@@ -158,6 +185,12 @@ int varDec(){
 			return;
 		}
 
+		if(multipledeclarationcheck(currToken.name) != -1){
+			printparseerror(18);
+			hasError = true;
+			return;
+		}
+
 		addToSymbolTable(2,currToken.name,0,level,numVars + 3,0);
 		numVars++;
 
@@ -194,6 +227,12 @@ void procDec(){
 		return;
 	}
 
+	if(multipledeclarationcheck(currToken.name) != -1){
+			printparseerror(18);
+			hasError = true;
+			return;
+		}
+
 	lexeme proc = currToken;
 	currToken = getToken();
 
@@ -211,7 +250,7 @@ void procDec(){
 	currToken = getToken();
 
 	if(currToken.type != semicolonsym){
-		printassemblycode(4);
+		printassemblycode(14);
 		hasError = true;
 		return;
 	}
@@ -552,7 +591,13 @@ instruction *parser_code_generator(lexeme *list)
 	//put halt on the code stack
 	emit(9,0,3);
 	
-
+	//check to ensure there is a period at the end of program
+	lexeme currToken = getToken();
+	if(currToken.type != periodsym){
+		printparseerror(1);
+		return code;
+	}
+	//need to go through and fix all the CAL functions and the initial jump function
 	
 	code[cIndex].op = -1;
 	return code;
