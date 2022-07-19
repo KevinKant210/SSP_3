@@ -535,9 +535,7 @@ void term(lexeme currToken){
 
 void factor(lexeme factToken){
 
-	int kind;
 
-	
 	if(factToken.type == identsym){
 
 		factToken = getToken();
@@ -548,7 +546,7 @@ void factor(lexeme factToken){
 			return;
 		}
 		
-		if(currToken.type == constsym){
+		if(factToken.type == constsym){
 			emit(1,0,table[symIdx].value);
 		}
 		else{
@@ -557,11 +555,18 @@ void factor(lexeme factToken){
 
 	}
 	// if var is being assigned a number
-	else if(token == numbersym){
+	else if(factToken.type == numbersym){
 		emit(1,0,currToken.value);
 	}
-	else if(token == lparentsym){
+	else if(factToken.type == lparentsym){
 		expression();
+		
+		factToken = getToken();
+		if(factToken.type != rparentsym){
+			printparseerror(12);
+			hasError = true;
+			return;
+		}
 	}
 	else{
 		printparseerror(11);
