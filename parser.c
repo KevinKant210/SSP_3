@@ -293,11 +293,7 @@ int statement(){
 //Statement functions
 void assign(lexeme identifier){
 
-	
-
 	int identIndex = findsymbol(identifier.name,2);
-
-		
 
 		if(identIndex == -1){
 			printassemblycode(6);
@@ -483,18 +479,18 @@ void term(lexeme currToken){
 	
 	factor(currToken);
 
-	lexeme currToken = getToken();
+	lexeme operation = getToken();
 
-	while(currToken.type == multsym||currToken.type == slashsym || currToken.type == modsym ){
-		if(currToken.type == multsym){
+	while(operation.type == multsym||operation.type == slashsym || operation.type == modsym ){
+		if(operation.type == multsym){
 			factor();
 			emit(2,0,4);
 		}
-		else if(currToken.type == slashsym){
+		else if(operation.type == slashsym){
 			factor();
 			emit(2,0,5);
 		}
-		else if(currToken.type == modsym){
+		else if(operation.type == modsym){
 			factor();
 			emit(2,0,6);
 		}
@@ -503,22 +499,17 @@ void term(lexeme currToken){
 
 }
 
-void factor(lexeme currToken){
+void factor(lexeme factToken){
 
 	int kind;
 
 	
-	if(currToken.type == identsym){
+	if(factToken.type == identsym){
 
-		currToken = getToken();
-		int symIdx = getSymIdx(currToken);
+		factToken = getToken();
+		int symIdx = findsymbol(factToken.name,2);
 		if(symIdx == -1){
 			printassemblycode(19);
-			hasError = true;
-			return;
-		}
-		else if(symIdx == 3){
-			printassemblycode(11);
 			hasError = true;
 			return;
 		}
@@ -537,8 +528,11 @@ void factor(lexeme currToken){
 	}
 	else if(token == lparentsym){
 		expression();
-
-
+	}
+	else{
+		printassemblycode(11);
+		hasError = true;
+		return;
 	}
 
 }
