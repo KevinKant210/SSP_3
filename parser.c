@@ -40,7 +40,7 @@ void printassemblycode();
 void constDec();
 int varDec();
 void procDec();
-int statement();
+void statement();
 
 void assign(lexeme identifier);
 void call();
@@ -59,63 +59,90 @@ void factor(lexeme factToken);
 lexeme getToken(){
 	lexeme curr = tokens[lIndex];
 	lIndex++;
+	//printf("%d\n", curr.type);
 	return curr;
 }
 
 void pushToken(){
 	//when looking at token did not get what we expected so we put it back on top
-	lIndex--;
+	lIndex = lIndex - 1;
 }
 
 //our fun functions XD lmao rawr
 void block(){
-	level++;
+	level = level +1;
 	int currProcIndex = tIndex-1;
 	int numVars;
 
 	lexeme currToken = getToken();
 
 	//check to see if we are running into a const symbol
+
+	while(currToken.type == constsym){
+		constDec();
+		currToken = getToken();
+	}
+	/*
 	if(currToken.type == constsym){
 		constDec();
+		currToken = getToken();
 	}
+	*/
 
 	if(hasError == true ){
 		return;
-	}else{
+	}
+
+	while(currToken.type == varsym){
+		varDec();
 		currToken = getToken();
 	}
 
-
-
+	/*
 	if(currToken.type == varsym){
 		
 		numVars = varDec();
+		currToken = getToken();
 	}
+	*/
 
 	if(hasError == true ){
 		return;
-	}else{
+	}
+
+	while(currToken.type == procsym){
+		procDec();
 		currToken = getToken();
 	}
 
+	/*
 	if(currToken.type == procsym){
 		procDec();
+		currToken = getToken();
 	}
+	*/
 
 	if(hasError == true ){
 		return;
-	}else{
-		table[currProcIndex].addr = cIndex;
-		emit(6,0,numVars+3);
 	}
-	
-	//at the end run statements and store address
+
+
 	table[currProcIndex].addr = cIndex;
 	emit(6,0,numVars+3);
-
-	statement();
 	
+	
+
+	//at the end run statements and store address
+	//table[currProcIndex].addr = cIndex;
+	//emit(6,0,numVars+3);
+
+	//statement runs its own get token since we are done with declaration
+	//above line may be bs
+	statement(currToken);
+	
+	if(hasError == true){
+		return;
+	}
 
 	mark();
 
@@ -139,8 +166,9 @@ void constDec(){
 			hasError = true;
 			return;
 		}
-
+		
 		if(multipledeclarationcheck(currToken.name) != -1){
+			
 			printparseerror(18);
 			hasError = true;
 			return;
@@ -165,7 +193,7 @@ void constDec(){
 			return;
 		}
 
-		addToSymbolTable(1,var.name,currToken.value,-1,-1,0);
+		addToSymbolTable(1,var.name,currToken.value,level,0,0);
 
 
 		currToken = getToken();
@@ -179,6 +207,7 @@ void constDec(){
 			hasError = true;
 			return;
 		}else{
+			//printf("hi 1");
 			printparseerror(14);
 			hasError = true;
 			return;
@@ -186,7 +215,7 @@ void constDec(){
 		
 	}
 	
-	
+	return;
 
 }
 //variable declarations
@@ -206,8 +235,9 @@ int varDec(){
 			hasError = true;
 			return numVars;
 		}
-
+		
 		if(multipledeclarationcheck(currToken.name) != -1){
+			
 			printparseerror(18);
 			hasError = true;
 			return numVars;
@@ -232,11 +262,14 @@ int varDec(){
 			hasError = true;
 			return numVars;
 		}else{
+			//printf("hi 2");
 			printparseerror(14);
 			hasError = true;
 			return numVars;
 		}
 	}
+
+	return numVars;
 }
 //procedure declarations
 void procDec(){
@@ -250,10 +283,10 @@ void procDec(){
 	}
 
 	if(multipledeclarationcheck(currToken.name) != -1){
-			printparseerror(18);
-			hasError = true;
-			return;
-		}
+		printparseerror(18);
+		hasError = true;
+		return;
+	}
 
 	lexeme proc = currToken;
 	currToken = getToken();
@@ -265,11 +298,20 @@ void procDec(){
 	}
 	//figure out what address we need to put for our procedures
 	// just fill in
-	addToSymbolTable(3,proc.name,0,0,0,0);
+	addToSymbolTable(3,proc.name,0,level,0,0);
 	
+	
+
 	block();
 
+	if(hasError == true){
+		return;
+	}
+
+	currToken = getToken();
+
 	if(currToken.type != semicolonsym){
+		//printf("hi 3");
 		printparseerror(14);
 		hasError = true;
 		return;
@@ -281,9 +323,9 @@ void procDec(){
 	return;
 }
 
-int statement(){
+void statement(lexeme curr){
 
-	lexeme currToken = getToken();
+	lexeme currToken = curr;
 
 	// assignment statements (“ident := expression”)
 	if(currToken.type == identsym){
@@ -302,12 +344,17 @@ int statement(){
 		whileStatement();
 	}
 	else if(currToken.type == writesym){
-		writeStatement(currToken);
+		
+		writeStatement();
 	}
 	else if(currToken.type == readsym){
+		currToken = getToken();
 		readStatement(currToken);
+	}else{
+		pushToken();
 	}
 
+	return;
 }
 
 //Statement functions
@@ -315,28 +362,33 @@ void assign(lexeme identifier){
 
 	int identIndex = findsymbol(identifier.name,2);
 
-		if(identIndex == -1){
-			if(findsymbol(identifier.name,3) != -1 || findsymbol(identifier.name,1) != 1){
-				printparseerror(6);
-				hasError = true;
-				return;
-			}
-			printparseerror(19);
+	if(identIndex == -1){
+		if(findsymbol(identifier.name,3) != -1 || findsymbol(identifier.name,1) != 1){
+			printparseerror(6);
 			hasError = true;
 			return;
 		}
+		
+		printparseerror(19);
+		hasError = true;
+		return;
+	}
 
-		lexeme currToken = getToken();
+	lexeme currToken = getToken();
+	
+	if(currToken.type != becomessym){
+		printparseerror(5);
+		hasError = true;
+		return;
+	}
 
-		if(currToken.type != becomessym){
-			printparseerror(5);
-			hasError = true;
-			return;
-		}
+	expression();
 
-		expression();
+	if(hasError == true){
+		return;
+	}
 
-		emit(4,level-table[identIndex].level,table[identIndex].addr);
+	emit(4,level-table[identIndex].level,table[identIndex].addr);
 		
 }
 
@@ -353,7 +405,7 @@ void call(){
 			hasError = true;
 			return;
 		}
-
+		
 		printparseerror(19);
 		hasError = true;
 		return;
@@ -368,24 +420,56 @@ void call(){
 
 void begin(){
 
-	statement();
-	lexeme currToken = getToken();
+
+
+
+
+
+	lexeme currToken;
+
+
+	do
+	{
+		currToken = getToken();
+		statement(currToken);
+
+		if(hasError == true){
+			return;
+		}
+
+		currToken = getToken();
+	} while (currToken.type == semicolonsym);
+	
+
+
+
+	/*
+	statement(currToken);
+
+	currToken = getToken();
+
+	if(currToken.type != semicolonsym){
+		pushToken();
+	}
 
 	while(currToken.type == semicolonsym){
 		
 		currToken = getToken();
 		if(currToken.type == endsym){
 			pushToken();
+			
 		}else{
-			pushToken();
-			statement();
+			//pushToken();
+			statement(currToken);
 		}
-	}
 
-	currToken = getToken();
+		currToken = getToken();
+	}
+	*/
+	//currToken = getToken();
 
 	if(currToken.type != endsym){
-
+		
 		switch (currToken.type)
 		{
 		case identsym:
@@ -427,12 +511,16 @@ void begin(){
 
 	}
 
-
+	return;
 }
 
 void ifStatement(){
 
 	condition();
+
+	if(hasError == true){
+		return;
+	}
 	int jpcIdx = cIndex;
 
 	lexeme then = getToken();
@@ -445,20 +533,29 @@ void ifStatement(){
 	}
 	// put a jump. addr unknown depending on the if statement outcome
 	emit(7,0,0);
+	lexeme currToken = getToken();
+	statement(currToken);
 
-	statement();
+	if(hasError == true){
+			return;
+		}
 	
 	// does jmpidx need to be global?
 	int jmpIdx = 0;
-	lexeme currToken = getToken();
+	currToken = getToken();
 	if(currToken.type == elsesym){
 		jmpIdx = cIndex;
 		emit(7,0,0);
 		code[jpcIdx].m = cIndex*3;
-		statement();
+		currToken = getToken();
+		statement(currToken);
+		if(hasError == true){
+			return;
+		}
 		code[jmpIdx].m = cIndex*3;
 	}
 	else{
+		pushToken();
 		code[jpcIdx].m = cIndex*3;
 	}
 }
@@ -466,6 +563,10 @@ void ifStatement(){
 void whileStatement(){
 	int loopIdx = cIndex;
 	condition();
+
+	if(hasError == true){
+			return;
+		}
 
 	lexeme dostatement = getToken();
 	if(dostatement.type != dosym){
@@ -476,23 +577,41 @@ void whileStatement(){
 	
 	int jpcIdx = cIndex;
 	emit(7,0,0);
-	statement();
+	lexeme currToken = getToken();
+	statement(currToken);
+
+	if(hasError == true){
+			return;
+		}
+
 	emit(7,0,loopIdx*3);
 	code[jpcIdx].m = cIndex;
 }
 
 void readStatement(lexeme identifier){
 
-	
 	int symIdx = findsymbol(identifier.name,2);
+
 	if(symIdx == -1){
-		printparseerror(19);
-		hasError = true;
-		return;
+		if(findsymbol(identifier.name,1) != -1 || findsymbol(identifier.name,2) != -1 || identifier.type != identsym){
+				printparseerror(6);
+				hasError = true;
+				return;
+			}else{
+				printparseerror(19);
+				hasError = true;
+				return;
+			}
+
 	}
+	
 	emit(9, 0, 2); 
 	emit(4, level - table[symIdx].level,table[symIdx].addr);
+	
 
+	
+
+	return;
 }
 
 void writeStatement(){
@@ -545,6 +664,7 @@ void condition(){
 	}
 }
 
+
 //used in assignment statements and write statements
 void expression(){
 	//["-"] term { ("+"|"-") term}.
@@ -553,53 +673,77 @@ void expression(){
 	
 	// if a var is getting assigned a negative expression
 	if(currToken.type == minussym){
+		currToken = getToken();
 		term(currToken);
 		//NEG
 		emit(2,0,1);
 	}
-	// if a var is getting assigned anything else
 	else{
+		// if a var is getting assigned anything else
+		
 		term(currToken);
 	}
 
 	// not sure what this does
+	currToken = getToken();
+
+	
+
 	while (currToken.type == plussym||currToken.type == minussym){
 		if(currToken.type == plussym){
+			currToken = getToken();
 			term(currToken);
 			//ADD
 			emit(2,0,2);
 		}
 		else{
+			currToken = getToken();
 			term(currToken);
 			//SUB
 			emit(2,0,3);
 		}
+
+		currToken = getToken();
+
 	}
 
+	pushToken();
+	return;
 }
 
 void term(lexeme currToken){
 	
 	factor(currToken);
 
-	lexeme operation = getToken();
+	currToken = getToken();
 
-	while(operation.type == multsym||operation.type == slashsym || operation.type == modsym ){
-		if(operation.type == multsym){
+	
+
+	while(currToken.type == multsym||currToken.type == slashsym || currToken.type == modsym ){
+		if(currToken.type == multsym){
+			currToken = getToken();
 			factor(currToken);
 			emit(2,0,4);
 		}
-		else if(operation.type == slashsym){
+		else if(currToken.type == slashsym){
+			currToken = getToken();
 			factor(currToken);
 			emit(2,0,5);
 		}
-		else if(operation.type == modsym){
+		else if(currToken.type == modsym){
+			currToken = getToken();
 			factor(currToken);
 			emit(2,0,6);
 		}
 		
+		currToken = getToken();
+
+		
 	}
 
+	pushToken();
+
+	return;
 }
 
 void factor(lexeme factToken){
@@ -607,37 +751,62 @@ void factor(lexeme factToken){
 
 	if(factToken.type == identsym){
 
-		factToken = getToken();
+		//factToken = getToken();
 		int symIdx = findsymbol(factToken.name,2);
+
 		if(symIdx == -1){
-			printparseerror(19);
-			hasError = true;
-			return;
+			symIdx = findsymbol(factToken.name,1);
+			if(symIdx == -1){
+				//not a variable or constant
+				symIdx = findsymbol(factToken.name,3);
+
+				if(symIdx == -1){
+					printparseerror(19);
+					hasError = true;
+					return;
+				}else{
+					
+					printparseerror(11);
+					hasError = true;
+					return;
+				}
+			}
+			
 		}
 		
-		if(factToken.type == constsym){
+		if(table[symIdx].kind == 1){
+			//then the identifier is a constant
 			emit(1,0,table[symIdx].value);
 		}
-		else{
+		else if(table[symIdx].kind == 2){
+			//then the identifier is a variable
 			emit(3,level-table[symIdx].level,table[symIdx].addr);
 		}
 
+		return;
 	}
 	// if var is being assigned a number
 	else if(factToken.type == numbersym){
 		emit(1,0,factToken.value);
+		return;
 	}
 	else if(factToken.type == lparentsym){
 		expression();
 		
+		if(hasError == true){
+			return;
+		}
+
 		factToken = getToken();
 		if(factToken.type != rparentsym){
 			printparseerror(12);
 			hasError = true;
 			return;
 		}
+
 	}
 	else{
+		
 		printparseerror(11);
 		hasError = true;
 		return;
@@ -667,15 +836,30 @@ instruction *parser_code_generator(lexeme *list)
 
 	block();
 
+	
+	if(hasError == true){
+		free(code);
+		free(table);
+		return NULL;
+	}
 	//put halt on the code stack
 	emit(9,0,3);
 	
 	//check to ensure there is a period at the end of program
-	lexeme currToken = getToken();
-	if(currToken.type != periodsym){
+	if(sizeof(list) == sizeof(lexeme) * lIndex){
+		printf("I filled up!");
 		printparseerror(1);
 		hasError = true;
+		
+	}else{
+		lexeme currToken = getToken();
+		if(currToken.type != periodsym){
+			printf("here is symbole %d", currToken.type);
+			printparseerror(1);
+			hasError = true;
+		}
 	}
+	
 
 	if(hasError == true){
 		free(code);
@@ -685,7 +869,8 @@ instruction *parser_code_generator(lexeme *list)
 	//need to go through and fix all the CAL functions and the initial jump function
 	
 	code[cIndex].op = -1;
-
+	printsymboltable();
+	printassemblycode();
 	free(table);
 	return code;
 }
