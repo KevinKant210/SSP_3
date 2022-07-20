@@ -175,7 +175,6 @@ void constDec(){
 		}else if(currToken.type == commasym){
 			currToken = getToken();
 		}else if(currToken.type == identsym){
-
 			printparseerror(13);
 			hasError = true;
 			return;
@@ -270,8 +269,6 @@ void procDec(){
 	
 	block();
 
-	currToken = getToken();
-
 	if(currToken.type != semicolonsym){
 		printparseerror(14);
 		hasError = true;
@@ -312,7 +309,6 @@ int statement(){
 	}
 
 }
-
 
 //Statement functions
 void assign(lexeme identifier){
@@ -671,11 +667,6 @@ instruction *parser_code_generator(lexeme *list)
 
 	block();
 
-	if(hasError == true){
-		free(code);
-		free(table);
-		return NULL;
-	}
 	//put halt on the code stack
 	emit(9,0,3);
 	
@@ -683,6 +674,10 @@ instruction *parser_code_generator(lexeme *list)
 	lexeme currToken = getToken();
 	if(currToken.type != periodsym){
 		printparseerror(1);
+		hasError = true;
+	}
+
+	if(hasError == true){
 		free(code);
 		free(table);
 		return NULL;
