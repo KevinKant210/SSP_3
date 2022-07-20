@@ -672,7 +672,9 @@ instruction *parser_code_generator(lexeme *list)
 	block();
 
 	if(hasError == true){
-		return code;
+		free(code);
+		free(table);
+		return NULL;
 	}
 	//put halt on the code stack
 	emit(9,0,3);
@@ -681,11 +683,15 @@ instruction *parser_code_generator(lexeme *list)
 	lexeme currToken = getToken();
 	if(currToken.type != periodsym){
 		printparseerror(1);
-		return code;
+		free(code);
+		free(table);
+		return NULL;
 	}
 	//need to go through and fix all the CAL functions and the initial jump function
 	
 	code[cIndex].op = -1;
+
+	free(table);
 	return code;
 }
 
