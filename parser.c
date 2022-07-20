@@ -37,6 +37,24 @@ void printparseerror(int err_code);
 void printsymboltable();
 void printassemblycode();
 
+void constDec();
+int varDec();
+void procDec();
+int statement();
+
+void assign(lexeme identifier);
+void call();
+void begin();
+void ifStatement();
+void whileStatement();
+void readStatement(lexeme identifier);
+void writeStatement();
+
+void condition();
+void expression();
+void term(lexeme currToken);
+void factor(lexeme factToken);
+
 //helper functions
 lexeme getToken(){
 	lexeme curr = tokens[lIndex];
@@ -88,7 +106,7 @@ void block(){
 	if(hasError == true ){
 		return;
 	}else{
-		table[currProc].addr = cIndex;
+		table[currProcIndex].addr = cIndex;
 		emit(6,0,numVars+3);
 	}
 	
@@ -187,13 +205,13 @@ int varDec(){
 			//expected ident sym got something else
 			printparseerror(3);
 			hasError = true;
-			return;
+			return numVars;
 		}
 
 		if(multipledeclarationcheck(currToken.name) != -1){
 			printparseerror(18);
 			hasError = true;
-			return;
+			return numVars;
 		}
 
 		addToSymbolTable(2,currToken.name,0,level,numVars + 3,0);
@@ -213,11 +231,11 @@ int varDec(){
 
 			printparseerror(13);
 			hasError = true;
-			return;
+			return numVars;
 		}else{
 			printparseerror(14);
 			hasError = true;
-			return;
+			return numVars;
 		}
 	}
 }
@@ -352,7 +370,6 @@ void call(){
 	emit(5,level-table[symIdx].level,symIdx);
 }
 
-
 void begin(){
 
 	statement();
@@ -371,7 +388,7 @@ void begin(){
 
 	currToken = getToken();
 
-	if(currToken != endsym){
+	if(currToken.type != endsym){
 
 		switch (currToken.type)
 		{
@@ -655,7 +672,7 @@ instruction *parser_code_generator(lexeme *list)
 	block();
 
 	if(hasError == true){
-		return;
+		return code;
 	}
 	//put halt on the code stack
 	emit(9,0,3);
